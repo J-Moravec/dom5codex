@@ -1,5 +1,5 @@
 import argparse
-#import pypandoc
+import pypandoc
 import os
 import pathlib
 
@@ -42,6 +42,13 @@ class Content():
         return content_list
 
     def parse_content_list(self):
+        # TODO -- syntaxt for excluding file, possibly "!file"
+        # TODO -- syntaxt for "everything else", possibly "..."
+        #      -- this would enable custom sorting of specific chapters
+        #      -- for example: introduction.md, ..., conclusion.md would first
+        #         put introduction, then everything else (except for
+        #         introduction, conclusion and anything that is excluded)
+        #         sorted in a correct alphabetical order and then 
         for i, item in enumerate(self.content_list):
             suffix = pathlib.Path(item).suffix
             if suffix == "":
@@ -85,6 +92,10 @@ def mkdir(folder):
         os.makedirs(folder)
 
 
+def change_ext(path, ext):
+    return os.path.splitext(path)[0] + "." + ext
+
+
 def get_parser():
     parser = argparse.ArgumentParser(
         prog="dom5Codex.py",
@@ -107,23 +118,31 @@ def get_parser():
     return(parser)
 
 
+def convert(file, ext):
+    target = change_ext(file, ext)
+    pypandoc.convert_file(file, ext, outputfile=target)
+
+
 def compile():
-    Content("content", "dom5codex.md").compile()
+    content = Content("content", "dom5codex.md")
+    content.compile()
+    return content
 
 
 def build():
-    compile()
-    pass #TODO
-
+    content = compile()
+    convert(content.result, "html")
+    
 
 def build_pdf():
-    compile()
-    pass #TODO
+    content = compile()
+    convert(content.result, "pdf")
+    
 
-
-def build_local_html():
-    compile()
-    pass #TODO
+def build_html_local():
+    content = compile()
+    convert(content.result, "html")
+    #TODO compile locally
 
 
 if __name__ == "__main__":
@@ -136,7 +155,7 @@ if __name__ == "__main__":
     elif args.pdf:
         build_pdf()
     elif args.html:
-        build_local_html()
+        build_html_local()
     else:
         parser.print_help()
         parser.exit(1)
